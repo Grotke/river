@@ -1,0 +1,14 @@
+# Blender MTL File: 'Garbage Container .blend'
+# Material Count: 1
+
+newmtl Material.204
+Ns 96.078431
+Ka 0.000000 0.000000 0.000000
+Kd 0.097711 0.193825 0.397546
+Ks 0.307190 0.307190 0.307190
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd textures\garbage container.png
+map_Bump textures\\garbage container.jpg
+map_Ks textures\\garbage container.jpg

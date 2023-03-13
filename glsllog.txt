@@ -1,0 +1,3 @@
+
+0(61) : error C1503: undefined variable "uUseTransparancy"
+
