@@ -16,8 +16,6 @@
 #include "glut.h"
 #include "glslprogram.h"
 #include <vector>
-//#include "heli.550"
-//#include "loadobjfile.cpp"
 
 
 //	This is a sample OpenGL / GLUT program
@@ -191,22 +189,11 @@ int		DepthCueOn;				// != 0 means to use intensity depth cueing
 int		DepthBufferOn;			// != 0 means to use the z-buffer
 int		DepthFightingOn;		// != 0 means to force the creation of z-fighting
 GLuint	BoxList;				// object display list
-GLuint	CitySceneList;
 GLuint waveList;
-GLuint PropellerList;
-GLuint HelicopterWireframeList;
-GLuint HelicopterList;
-GLuint fountain;
-GLuint streetLight;
-GLuint cityBuildings;
-GLuint dodgeCharger;
-GLuint chevyCamaro;
-GLuint building;
 
 int		MainWindow;				// window id for main graphics window
 float	Scale;					// scaling factor
 int		ShadowsOn;				// != 0 means to turn shadows on
-int		CockpitOn;
 int		WireframeOn;
 int		WhichColor;				// index into Colors[ ]
 int		WhichProjection;		// ORTHO or PERSP
@@ -218,9 +205,6 @@ float	groundWidth = 10.0f;
 const int TRIANGLES_ACROSS = 100;
 const int TRIANGLES_LONG = 200;
 float Time;
-float HelicopterX = 0.;
-float HelicopterY = 1.0;
-float HelicopterZ = 15.0;
 bool Distort;
 bool TextureOn;
 bool AnimateFrag;
@@ -233,11 +217,7 @@ const int STACKS = 200;
 float vertAnimate = 0;
 float fragAnimate = 0;
 
-float streetStart = -1.0f;
-float streetWidth = groundWidth / 5.0f;
-float carSpeed = 2.0f;
 constexpr int NUM_CURVES = 10;
-bool AnimateBoat;
 bool DisplayCurves;
 bool DisplayPoints;
 GLuint TerrainList;
@@ -284,12 +264,9 @@ void	DoDebugMenu(int);
 void	DoMainMenu(int);
 void	ToggleLight(int);
 void	DoProjectMenu(int);
-void	DoCockpitMenu(int);
 void	DoTextureMenu(int);
 void	ToggleWireframe(int);
 void	DoShadowMenu();
-void	DoRasterString(float, float, float, char*);
-void	DoStrokeString(float, float, float, float, char*);
 float	ElapsedSeconds();
 void	InitGraphics();
 void	InitLists();
@@ -306,36 +283,19 @@ struct point {
 	float s, t;		// texture coords
 };
 
-struct point*
-	PtsPointer(int lat, int lng);
-
-void
-DrawPoint(struct point* p);
-
-void
-MjbSphere(float radius, int slices, int stacks);
-
 void			Axes(float);
 unsigned char* BmpToTexture(char*, int*, int*);
-void			HsvRgb(float[3], float[3]);
 int				ReadInt(FILE*);
 short			ReadShort(FILE*);
 
 void			Cross(float[3], float[3], float[3]);
 float			Dot(float[3], float[3]);
 float			Unit(float[3], float[3]);
-void			CreateBuilding(float length, float width, float height, float startX, float frontZ);
-void			CreateStreet(float width, float z);
-void			CreateGround();
-void			CreateBuildings(int numBuildings, float frontZ);
 char* ReadRestOfLine(FILE*);
 void	ReadObjVTN(char*, int*, int*, int*);
 float	Unit(float[3]);
 int
 LoadObjFile(char* name);
-
-void
-RotateX(Point* p, float deg, float xc, float yc, float zc);
 
 float White[] = { 1.,1.,1.,1. };
 // utility to createan array from 3 separatevalues:
@@ -469,10 +429,6 @@ Display()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	if (CockpitOn) {
-		gluLookAt(-0.4 + HelicopterX, 1.8 + HelicopterY, -4.9 + HelicopterZ, 0., 0., 0., 0., 1., 0.);
-	}
-	else {
 		// set the eye position, look-at position, and up-vector:
 
 		gluLookAt(0., 0., 3., 0., 0., 0., 0., 1., 0.);
@@ -489,7 +445,6 @@ Display()
 		if (Scale < MINSCALE)
 			Scale = MINSCALE;
 		glScalef((GLfloat)Scale, (GLfloat)Scale, (GLfloat)Scale);
-	}
 
 	// set the fog parameters:
 
@@ -590,8 +545,6 @@ Display()
 
 	glDisable(GL_DEPTH_TEST);
 	glColor3f(0., 1., 1.);
-	//DoRasterString( 0., 1., 0., "Text That Moves" );
-
 
 	// draw some gratuitous text that is fixed on the screen:
 	//
@@ -610,8 +563,6 @@ Display()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glColor3f(1., 1., 1.);
-	//DoRasterString( 5., 5., 0., "Text That Doesn't" );
-
 
 	// swap the double-buffered framebuffers:
 
@@ -748,14 +699,6 @@ DoProjectMenu(int id)
 }
 
 void
-DoCockpitMenu(int id)
-{
-	CockpitOn = !CockpitOn;
-	glutSetWindow(MainWindow);
-	glutPostRedisplay();
-}
-
-void
 DoTextureMenu(int id)
 {
 	if (id == 0) {
@@ -791,40 +734,6 @@ DoShadowsMenu(int id)
 	glutSetWindow(MainWindow);
 	glutPostRedisplay();
 }
-
-
-// use glut to display a string of characters using a raster font:
-
-void
-DoRasterString(float x, float y, float z, char* s)
-{
-	glRasterPos3f((GLfloat)x, (GLfloat)y, (GLfloat)z);
-
-	char c;			// one character to print
-	for (; (c = *s) != '\0'; s++)
-	{
-		glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, c);
-	}
-}
-
-
-// use glut to display a string of characters using a stroke font:
-
-void
-DoStrokeString(float x, float y, float z, float ht, char* s)
-{
-	glPushMatrix();
-	glTranslatef((GLfloat)x, (GLfloat)y, (GLfloat)z);
-	float sf = ht / (119.05f + 33.33f);
-	glScalef((GLfloat)sf, (GLfloat)sf, (GLfloat)sf);
-	char c;			// one character to print
-	for (; (c = *s) != '\0'; s++)
-	{
-		glutStrokeCharacter(GLUT_STROKE_ROMAN, c);
-	}
-	glPopMatrix();
-}
-
 
 // return the number of seconds since the start of the program:
 
@@ -883,10 +792,6 @@ InitMenus()
 	glutAddMenuEntry("Off", 0);
 	glutAddMenuEntry("On", 1);
 
-	int cockpitmenu = glutCreateMenu(DoCockpitMenu);
-	glutAddMenuEntry("Off", 0);
-	glutAddMenuEntry("On", 1);
-
 	int texturemenu = glutCreateMenu(DoTextureMenu);
 	glutAddMenuEntry("None", 0);
 	glutAddMenuEntry("Normal Texture", 1);
@@ -895,7 +800,6 @@ InitMenus()
 	int mainmenu = glutCreateMenu(DoMainMenu);
 	glutAddSubMenu("Axes", axesmenu);
 	glutAddSubMenu("Colors", colormenu);
-	//glutAddSubMenu("Cockpit", cockpitmenu);
 	glutAddSubMenu("Textures", texturemenu);
 
 
@@ -916,7 +820,6 @@ InitMenus()
 
 	glutAddMenuEntry("Reset", RESET);
 	glutAddSubMenu("Debug", debugmenu);
-	//glutAddSubMenu("Cockpit", cockpitmenu);
 	glutAddMenuEntry("Quit", QUIT);
 
 	// attach the pop-up menu to the right mouse button:
@@ -1128,123 +1031,6 @@ InitLists()
 	glEndList();
 }
 
-void CreateGround()
-{
-	float dx = groundLength / 2.0f;
-	float dz = groundWidth / 2.0f;
-	glColor3f(0.1, 0.1, 0.2);
-	glNormal3f(0., 1., 0.);
-	glVertex3f(dx, groundOffset, dz);
-	glVertex3f(-dx, groundOffset, dz);
-	glVertex3f(-dx, groundOffset, -dz);
-	glVertex3f(dx, groundOffset, -dz);
-}
-
-void
-CreateBuilding(float length, float width, float height, float startX, float frontZ) {
-	glColor3f(0.9, 0.9, 1.0);
-	// Front
-	glNormal3f(0., 0., 1.);
-	glVertex3f(startX, groundOffset, frontZ);
-	glVertex3f(startX - length, groundOffset, frontZ);
-	glVertex3f(startX - length, height, frontZ);
-	glVertex3f(startX, height, frontZ);
-	glColor3f(0.3, 0.3, 0.6);
-	// Back
-	glNormal3f(0., 0., -1.);
-	glVertex3f(startX, groundOffset, frontZ - width);
-	glVertex3f(startX - length, groundOffset, frontZ - width);
-	glVertex3f(startX - length, height, frontZ - width);
-	glVertex3f(startX, height, frontZ - width);
-	// Left
-	glNormal3f(1., 0., 0.);
-	glVertex3f(startX, groundOffset, frontZ - width);
-	glVertex3f(startX, groundOffset, frontZ);
-	glVertex3f(startX, height, frontZ);
-	glVertex3f(startX, height, frontZ - width);
-	// Right
-	glNormal3f(-1., 0., 0.);
-	glVertex3f(startX - length, groundOffset, frontZ - width);
-	glVertex3f(startX - length, groundOffset, frontZ);
-	glVertex3f(startX - length, height, frontZ);
-	glVertex3f(startX - length, height, frontZ - width);
-	// Top
-	glColor3f(0.8, 0.8, 1.0);
-	glNormal3f(0., 1., 0.);
-	glVertex3f(startX, height, frontZ);
-	glVertex3f(startX - length, height, frontZ);
-	glVertex3f(startX - length, height, frontZ - width);
-	glVertex3f(startX, height, frontZ - width);
-}
-
-void
-CreateStreet(float width, float z) {
-	float streetOffsetFromGround = 0.001;
-	float dx = groundLength / 2.0f;
-	float streetY = groundOffset + streetOffsetFromGround;
-	// Street
-	glColor3f(0.1, 0.1, 0.1);
-	glNormal3f(0., 1., 0.);
-	glVertex3f(-dx, streetY, z);
-	glVertex3f(dx, streetY, z);
-	glVertex3f(dx, streetY, z + width);
-	glVertex3f(-dx, streetY, z + width);
-	// Street markings
-	int numberOfMarkings = 20;
-	int numberOfSpacings = numberOfMarkings + 2;
-	float streetMarkingLength = groundLength / (numberOfMarkings + numberOfSpacings);
-	float streetMarkingWidth = width / 50.0f;
-	float streetMarkingZ = z + (width / 2.0f);
-
-	glColor3f(0.8, 0.8, 0.0);
-	float currentX = -dx;
-	float markingY = streetY + streetOffsetFromGround;
-	for (int i = 0; i < numberOfMarkings; i++) {
-		currentX += streetMarkingLength;
-		glVertex3f(currentX, markingY, streetMarkingZ - streetMarkingWidth);
-		glVertex3f(currentX + streetMarkingLength, markingY, streetMarkingZ - streetMarkingWidth);
-		glVertex3f(currentX + streetMarkingLength, markingY, streetMarkingZ + streetMarkingWidth);
-		glVertex3f(currentX, markingY, streetMarkingZ + streetMarkingWidth);
-		currentX += streetMarkingLength;
-	}
-
-	// Sidewalks
-	float sidewalkWidth = width / 8.0f;
-	glColor3f(0.7, 0.7, 0.7);
-	glVertex3f(-dx, markingY, z);
-	glVertex3f(dx, markingY, z);
-	glVertex3f(dx, markingY, z + sidewalkWidth);
-	glVertex3f(-dx, markingY, z + sidewalkWidth);
-	glVertex3f(-dx, markingY, z + width - sidewalkWidth);
-	glVertex3f(dx, markingY, z + width - sidewalkWidth);
-	glVertex3f(dx, markingY, z + width);
-	glVertex3f(-dx, markingY, z + width);
-
-}
-
-void CreateBuildings(int numBuildings, float frontZ) {
-	int buildingSeparators = numBuildings + 2;
-	float minBuildingLength = 0.5f;
-	float maxBuildingLength = groundLength / (numBuildings + buildingSeparators);
-	float minBuildingWidth = 0.4f;
-	float maxBuildingWidth = 1.0f;
-	float currentX = groundLength / 2.0f;
-	float minHeight = 0.1f;
-	float maxHeight = 3.0f;
-	float minSep = maxBuildingLength / 10.0f;
-	float maxSep = maxBuildingLength * 0.9f;
-	float minZ = frontZ + 0.1f;
-	float maxZ = frontZ - 0.1f;
-	for (int i = 0; i < numBuildings; i++) {
-		currentX -= ((float)rand() / (float)(RAND_MAX / maxSep)) + minSep;
-		float height = ((float)rand() / (float)(RAND_MAX / maxHeight)) + minHeight;
-		float modifiedZ = ((float)rand() / (float)(RAND_MAX / maxZ)) + minZ;
-		float buildingLength = ((float)rand() / (float)(RAND_MAX / maxBuildingLength)) + minBuildingLength;
-		CreateBuilding(buildingLength, 0.5f, height, currentX, modifiedZ);
-		currentX -= buildingLength;
-	}
-}
-
 // the keyboard callback:
 
 void
@@ -1271,11 +1057,6 @@ Keyboard(unsigned char c, int x, int y)
 		DoMainMenu(QUIT);	// will not return here
 		break;				// happy compiler
 
-
-	case 'c':
-	case 'C':
-		DoCockpitMenu(x);
-		break;
 	case '0':
 		ToggleLight(0);
 		break;
@@ -1325,9 +1106,6 @@ MouseButton(int button, int state, int x, int y)
 
 	if (DebugOn != 0)
 		fprintf(stderr, "MouseButton: %d, %d, %d, %d\n", button, state, x, y);
-	if (CockpitOn) {
-		return;
-	}
 
 	// get the proper button bit mask:
 
@@ -1387,9 +1165,6 @@ MouseMotion(int x, int y)
 {
 	if (DebugOn != 0)
 		fprintf(stderr, "MouseMotion: %d, %d\n", x, y);
-	if (CockpitOn) {
-		return;
-	}
 
 	int dx = x - Xmouse;		// change in mouse coords
 	int dy = y - Ymouse;
@@ -1434,7 +1209,6 @@ Reset()
 	DepthCueOn = 0;
 	Scale = 1.0;
 	ShadowsOn = 0;
-	CockpitOn = 0;
 	WireframeOn = 0;
 	WhichColor = WHITE;
 	WhichProjection = PERSP;
@@ -1443,7 +1217,6 @@ Reset()
 	TextureOn = false;
 	AnimateVert = false;
 	AnimateFrag = false;
-	AnimateBoat = false;
 	DisplayPoints = true;
 	DisplayCurves = true;
 	UseTransparency = true;
@@ -1751,84 +1524,6 @@ ReadShort(FILE* fp)
 	return (b1 << 8) | b0;
 }
 
-
-// function to convert HSV to RGB
-// 0.  <=  s, v, r, g, b  <=  1.
-// 0.  <= h  <=  360.
-// when this returns, call:
-//		glColor3fv( rgb );
-
-void
-HsvRgb(float hsv[3], float rgb[3])
-{
-	// guarantee valid input:
-
-	float h = hsv[0] / 60.f;
-	while (h >= 6.)	h -= 6.;
-	while (h < 0.) 	h += 6.;
-
-	float s = hsv[1];
-	if (s < 0.)
-		s = 0.;
-	if (s > 1.)
-		s = 1.;
-
-	float v = hsv[2];
-	if (v < 0.)
-		v = 0.;
-	if (v > 1.)
-		v = 1.;
-
-	// if sat==0, then is a gray:
-
-	if (s == 0.0)
-	{
-		rgb[0] = rgb[1] = rgb[2] = v;
-		return;
-	}
-
-	// get an rgb from the hue itself:
-
-	float i = (float)floor(h);
-	float f = h - i;
-	float p = v * (1.f - s);
-	float q = v * (1.f - s * f);
-	float t = v * (1.f - (s * (1.f - f)));
-
-	float r = 0., g = 0., b = 0.;			// red, green, blue
-	switch ((int)i)
-	{
-	case 0:
-		r = v;	g = t;	b = p;
-		break;
-
-	case 1:
-		r = q;	g = v;	b = p;
-		break;
-
-	case 2:
-		r = p;	g = v;	b = t;
-		break;
-
-	case 3:
-		r = p;	g = q;	b = v;
-		break;
-
-	case 4:
-		r = t;	g = p;	b = v;
-		break;
-
-	case 5:
-		r = v;	g = p;	b = q;
-		break;
-	}
-
-
-	rgb[0] = r;
-	rgb[1] = g;
-	rgb[2] = b;
-}
-
 void
 Cross(float v1[3], float v2[3], float vout[3])
 {
@@ -1868,156 +1563,6 @@ Unit(float vin[3], float vout[3])
 }
 
 int		NumLngs, NumLats;
-struct point* Pts;
-
-struct point*
-	PtsPointer(int lat, int lng)
-{
-	if (lat < 0)	lat += (NumLats - 1);
-	if (lng < 0)	lng += (NumLngs - 1);
-	if (lat > NumLats - 1)	lat -= (NumLats - 1);
-	if (lng > NumLngs - 1)	lng -= (NumLngs - 1);
-	return &Pts[NumLngs * lat + lng];
-}
-
-
-
-void
-DrawPoint(struct point* p)
-{
-	glNormal3f(p->nx, p->ny, p->nz);
-	glTexCoord2f(p->s, p->t);
-	glVertex3f(p->x, p->y, p->z);
-}
-
-void
-MjbSphere(float radius, int slices, int stacks)
-{
-	struct point top, bot;		// top, bottom points
-	struct point* p;
-
-	// set the globals:
-
-	NumLngs = slices;
-	NumLats = stacks;
-
-	if (NumLngs < 3)
-		NumLngs = 3;
-
-	if (NumLats < 3)
-		NumLats = 3;
-
-
-	// allocate the point data structure:
-
-	Pts = new struct point[NumLngs * NumLats];
-
-
-	// fill the Pts structure:
-
-	for (int ilat = 0; ilat < NumLats; ilat++)
-	{
-		float lat = -M_PI / 2. + M_PI * (float)ilat / (float)(NumLats - 1);
-		float xz = cos(lat);
-		float y = sin(lat);
-		for (int ilng = 0; ilng < NumLngs; ilng++)
-		{
-			float lng = -M_PI + 2. * M_PI * (float)ilng / (float)(NumLngs - 1);
-			float x = xz * cos(lng);
-			float z = -xz * sin(lng);
-			p = PtsPointer(ilat, ilng);
-			p->x = radius * x;
-			p->y = radius * y;
-			p->z = radius * z;
-			p->nx = x;
-			p->ny = y;
-			p->nz = z;
-			if (Distort)
-			{
-				p->s = (lng + M_PI) / (2. * M_PI );
-				p->t = (lat + M_PI / 2.) / M_PI * Time;
-			}
-			else
-			{
-				p->s = (lng + M_PI) / (2. * M_PI);
-				p->t = (lat + M_PI / 2.) / M_PI;
-			}
-		}
-	}
-
-	top.x = 0.;		top.y = radius;	top.z = 0.;
-	top.nx = 0.;		top.ny = 1.;		top.nz = 0.;
-	top.s = 0.;		top.t = 1.;
-
-	bot.x = 0.;		bot.y = -radius;	bot.z = 0.;
-	bot.nx = 0.;		bot.ny = -1.;		bot.nz = 0.;
-	bot.s = 0.;		bot.t = 0.;
-
-
-	// connect the north pole to the latitude NumLats-2:
-
-	glBegin(GL_QUADS);
-	for (int ilng = 0; ilng < NumLngs - 1; ilng++)
-	{
-		p = PtsPointer(NumLats - 1, ilng);
-		DrawPoint(p);
-
-		p = PtsPointer(NumLats - 2, ilng);
-		DrawPoint(p);
-
-		p = PtsPointer(NumLats - 2, ilng + 1);
-		DrawPoint(p);
-
-		p = PtsPointer(NumLats - 1, ilng + 1);
-		DrawPoint(p);
-	}
-	glEnd();
-
-	// connect the south pole to the latitude 1:
-
-	glBegin(GL_QUADS);
-	for (int ilng = 0; ilng < NumLngs - 1; ilng++)
-	{
-		p = PtsPointer(0, ilng);
-		DrawPoint(p);
-
-		p = PtsPointer(0, ilng + 1);
-		DrawPoint(p);
-
-		p = PtsPointer(1, ilng + 1);
-		DrawPoint(p);
-
-		p = PtsPointer(1, ilng);
-		DrawPoint(p);
-	}
-	glEnd();
-
-
-	// connect the other 4-sided polygons:
-
-	glBegin(GL_QUADS);
-	for (int ilat = 2; ilat < NumLats - 1; ilat++)
-	{
-		for (int ilng = 0; ilng < NumLngs - 1; ilng++)
-		{
-			p = PtsPointer(ilat - 1, ilng);
-			DrawPoint(p);
-
-			p = PtsPointer(ilat - 1, ilng + 1);
-			DrawPoint(p);
-
-			p = PtsPointer(ilat, ilng + 1);
-			DrawPoint(p);
-
-			p = PtsPointer(ilat, ilng);
-			DrawPoint(p);
-		}
-	}
-	glEnd();
-
-	delete[] Pts;
-	Pts = NULL;
-}
 
 // delimiters for parsing the obj file:
 
@@ -2419,21 +1964,4 @@ ReadObjVTN(char* str, int* v, int* t, int* n)
 			sscanf(str, "%d", v);
 		}
 	}
-}
-
-void
-RotateX(Point* p, float deg, float xc, float yc, float zc)
-{
-	float rad = deg * (M_PI / 180.f);         // radians
-	float x = p->x0 - xc;
-	float y = p->y0 - yc;
-	float z = p->z0 - zc;
-
-	float xp = x;
-	float yp = y * cos(rad) - z * sin(rad);
-	float zp = y * sin(rad) + z * cos(rad);
-
-	p->x = xp + xc;
-	p->y = yp + yc;
-	p->z = zp + zc;
 }
