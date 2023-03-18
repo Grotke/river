@@ -56,9 +56,9 @@ main()
 		int actualTexelT = int(floor(uTerrainTextureHeight * vST.t));
 		// Map the tile into S, T coordinates
 		// Each tile has its own ST coordinates. We're basically computing the current pixel as a percentage of the tile to get ST coordinates from 0..1
-		// UNUSED, think this was meant to be used with the flow map
-		float blockT = float(actualTexelT - blockStartTPixel) / float(uBlockSize);
-		float blockS = float(actualTexelS - blockStartSPixel) / float(uBlockSize);
+		// Don't remember why it uses TexelT for BlockS, but if I change them to match the river flows across the bed instead of down it
+		float blockS = float(actualTexelT - blockStartTPixel) / float(uBlockSize);
+		float blockT = float(actualTexelS - blockStartSPixel) / float(uBlockSize);
 
 		// Water transparency
 		float alpha = 0.4;
